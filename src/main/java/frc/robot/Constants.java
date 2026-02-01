@@ -30,13 +30,13 @@ public class Constants {
                 public enum ModuleConstants {
                         // Configuration for each swerve module
                         FL( // Front left
-                                        10, 20, 0, 1.095262, kTrackLength / 2, kTrackWidth / 2),
+                                        10, 20, 0, 1.096796, kTrackLength / 2, kTrackWidth / 2),
                         FR( // Front Right
-                                        11, 21, 1, 2.543340, kTrackLength / 2, -kTrackWidth / 2),
+                                        11, 21, 1, 2.549476, kTrackLength / 2, -kTrackWidth / 2),
                         BL( // Back Left
-                                        12, 22, 2, -0.708699, -kTrackLength / 2, kTrackWidth / 2),
+                                        12, 22, 2, -0.707165, -kTrackLength / 2, kTrackWidth / 2),
                         BR( // Back Right
-                                        13, 23, 3, -2.411418, -kTrackLength / 2, -kTrackWidth / 2);
+                                        13, 23, 3, -2.419088, -kTrackLength / 2, -kTrackWidth / 2);
 
                         public final int drivermotorID0;
                         public final int anglemotorID0;

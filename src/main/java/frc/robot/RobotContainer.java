@@ -27,7 +27,7 @@ public class RobotContainer {
     private final SendableChooser<Command> autoChooser;
 
     /* Subsystems */
-    private final Swerve s_swerve = new Swerve();
+    public final Swerve s_swerve = new Swerve();
 
     public RobotContainer() {
 

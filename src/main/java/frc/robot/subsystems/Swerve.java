@@ -31,19 +31,15 @@ public class Swerve extends SubsystemBase {
     // Construct the swerve modules with their respective constants.
     // The SwerveModule class will handle all the details of controlling the
     // modules.
-    private final MAXSwerveModule[] swerveMods = {
-            new MAXSwerveModule(Constants.Swerve.ModuleConstants.FL),
-            new MAXSwerveModule(Constants.Swerve.ModuleConstants.FR),
-            new MAXSwerveModule(Constants.Swerve.ModuleConstants.BL),
-            new MAXSwerveModule(Constants.Swerve.ModuleConstants.BR)
-    };
+    private MAXSwerveModule[] swerveMods;
+    private MAXSwerveModule mod0;
+    private MAXSwerveModule mod1;
+    private MAXSwerveModule mod2;
+    private MAXSwerveModule mod3;
+
 
     // Kinematics for the swerve drive, based on the module locations.
-    private final SwerveDriveKinematics kinematics = new SwerveDriveKinematics(
-            swerveMods[0].getModuleConstants().centerOffset,
-            swerveMods[1].getModuleConstants().centerOffset,
-            swerveMods[2].getModuleConstants().centerOffset,
-            swerveMods[3].getModuleConstants().centerOffset);
+    private SwerveDriveKinematics kinematics;
     public boolean autoOnSuccess = false;
 
     public Swerve() {
@@ -68,7 +64,20 @@ public class Swerve extends SubsystemBase {
         // position in meters, and heading in radians). Increase these numbers to trust
         // the vision pose measurement less.
         var visionStdDevs = VecBuilder.fill(1, 1, 1);
-
+        swerveMods = new MAXSwerveModule[4];
+        mod0 = new MAXSwerveModule(Constants.Swerve.ModuleConstants.FL);
+        mod1 = new MAXSwerveModule(Constants.Swerve.ModuleConstants.FR);
+        mod2 = new MAXSwerveModule(Constants.Swerve.ModuleConstants.BL);
+        mod3 = new MAXSwerveModule(Constants.Swerve.ModuleConstants.BR);
+        swerveMods[0] = mod0;
+        swerveMods[1] = mod1;
+        swerveMods[2] = mod2;
+        swerveMods[3] = mod3;
+        kinematics = new SwerveDriveKinematics(
+            swerveMods[0].getModuleConstants().centerOffset,
+            swerveMods[1].getModuleConstants().centerOffset,
+            swerveMods[2].getModuleConstants().centerOffset,
+            swerveMods[3].getModuleConstants().centerOffset);
         poseEstimator = new SwerveDrivePoseEstimator(kinematics, getGyroYaw(), getModulePositions(), new Pose2d(),
                 stateStdDevs,
                 visionStdDevs);
@@ -174,8 +183,8 @@ public class Swerve extends SubsystemBase {
      */
     public void addVisionMeasurement(Pose2d visionMeasurement, double timestampSeconds) {
         poseEstimator.addVisionMeasurement(visionMeasurement, timestampSeconds);
-        DriverStation.reportWarning("" + visionMeasurement.getX() + ", " + visionMeasurement.getY() + ", "
-                + visionMeasurement.getRotation().getDegrees(), false);
+        // DriverStation.reportWarning("" + visionMeasurement.getX() + ", " + visionMeasurement.getY() + ", "
+                // + visionMeasurement.getRotation().getDegrees(), false);
     }
 
     /**
@@ -186,8 +195,8 @@ public class Swerve extends SubsystemBase {
             Pose2d visionMeasurement, double timestampSeconds, Matrix<N3, N1> stdDevs) {
         poseEstimator.addVisionMeasurement(visionMeasurement, timestampSeconds,
                 stdDevs);
-        DriverStation.reportWarning("" + visionMeasurement.getX() + ", " + visionMeasurement.getY() + ", "
-                + visionMeasurement.getRotation().getDegrees(), false);
+        // DriverStation.reportWarning("" + visionMeasurement.getX() + ", " + visionMeasurement.getY() + ", "
+                // + visionMeasurement.getRotation().getDegrees(), false);
     }
 
     /**

@@ -79,7 +79,7 @@ public class MAXSwerveModule {
      * chassis angular offset.
      */
     public void resetToAbsolute() {
-        double absolutePosition = getCanCoder().getDegrees() - m_chassisAngularOffset;
+        double absolutePosition = getCanCoder().getRadians() - m_chassisAngularOffset;
         m_turningEncoder.setPosition(absolutePosition);
     }
     /**
