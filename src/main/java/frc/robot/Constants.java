@@ -8,7 +8,7 @@ import frc.lib.util.swerveUtil.COTSNeoSwerveConstants.driveGearRatios;
 
 public class Constants {
 
-    //0.02208974359 PathPlanner Units per inch
+    //0.0238 PathPlanner Units per inch
 
     public static final COTSNeoSwerveConstants chosenModule = COTSNeoSwerveConstants.SDSMK4i(driveGearRatios.SDSMK4i_L2);
     public static final double angleGearRatio = chosenModule.angleGearRatio;
@@ -37,7 +37,7 @@ public class Constants {
         public static final double kWheelDiameterMeters = Units.inchesToMeters(4);
         public static final double kWheelCircumferenceMeters = kWheelDiameterMeters * Math.PI;
 
-        public static final double kDrivingMotorReduction = (45.0*22) / (kDrivingMotorPinionTeeth * 15);
+        public static final double kDrivingMotorReduction = (45.0*16.0*50.0) / (kDrivingMotorPinionTeeth * 15.0 * 28.0);
         public static final double kDriveWheelFreeSpeedRps = (kDrivingMotorFreeSpeedRps * kWheelCircumferenceMeters) / kDrivingMotorReduction;
     }
 
@@ -74,5 +74,42 @@ public class Constants {
     }
     public static final class NeoMotorConstants {
         public static final double kFreeSpeedRpm = 5676;
+    }
+    public static final class AprilTagLocations {
+        //Blue Features
+        public static final int blueCenterOutpostMiddle = 26;
+        public static final int blueCenterOutpostLeft = 25;
+        public static final int blueLeftOuterTrench = 23;
+        public static final int blueLeftInnerTrench = 22;
+        public static final int blueRightOuterTrench = 28;
+        public static final int blueRightInnerTrench = 17;
+        public static final int blueLeftOutpostMiddle = 21;
+        public static final int blueLeftOutpostRight = 24;
+        public static final int blueRightOutpostMiddle = 18;
+        public static final int blueRightOutpostLeft = 27;
+        public static final int blueRearOutpostLeft = 19;
+        public static final int blueRearOutpostRight = 20;
+        public static final int blueHumanPlayerLeft = 29;
+        public static final int blueHumanPlayerRight = 30;
+        public static final int blueClimbLeft = 31;
+        public static final int blueClimbRight = 32;
+        
+        //Red Features
+        public static final int redCenterOutpostMiddle = 10;
+        public static final int redCenterOutpostLeft = 9;
+        public static final int redLeftOuterTrench = 7;
+        public static final int redLeftInnerTrench = 6;
+        public static final int redRightOuterTrench = 12;
+        public static final int redRightInnerTrench = 1;
+        public static final int redLeftOutpostMiddle = 5;
+        public static final int redLeftOutpostRight = 8;
+        public static final int redRightOutpostMiddle = 2;
+        public static final int redRightOutpostLeft = 11;
+        public static final int redRearOutpostLeft = 3;
+        public static final int redRearOutpostRight = 4;
+        public static final int redHumanPlayerLeft = 13;
+        public static final int redHumanPlayerRight = 14;
+        public static final int redClimbLeft = 15;
+        public static final int redClimbRight = 16;
     }
 }

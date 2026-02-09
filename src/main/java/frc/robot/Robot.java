@@ -19,6 +19,7 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
  * this project, you must also update the manifest file in the resource directory.
  */
 public class Robot extends TimedRobot {
+  //We don't use differential drive, so ignore any code relating to m_leftDrive, m_rightDrive, or m_robotDrive
   private final PWMSparkMax m_leftDrive = new PWMSparkMax(0);
   private final PWMSparkMax m_rightDrive = new PWMSparkMax(1);
   private final DifferentialDrive m_robotDrive =
@@ -26,11 +27,13 @@ public class Robot extends TimedRobot {
   private final XboxController m_controller = new XboxController(0);
   private final Timer m_timer = new Timer();
 
+  //We use RobotContainer to set up all our subsystems, autonomous, and teleoperated commands. 
   private RobotContainer m_RobotContainer;
   private Command m_autonomousCommand;
 
   /** Called once at the beginning of the robot program. */
   public Robot() {
+
     SendableRegistry.addChild(m_robotDrive, m_leftDrive);
     SendableRegistry.addChild(m_robotDrive, m_rightDrive);
 
@@ -38,10 +41,14 @@ public class Robot extends TimedRobot {
     // result in both sides moving forward. Depending on how your robot's
     // gearbox is constructed, you might have to invert the left side instead.
     m_rightDrive.setInverted(true);
+
+    //Initializes the robotContainer object
     m_RobotContainer = new RobotContainer();
   }
 
+
   public void robotPeriodic() {
+    //Initializes the command scheduler which handles any commands given to different subsystems. 
     CommandScheduler.getInstance().run();
   }
 
@@ -49,6 +56,7 @@ public class Robot extends TimedRobot {
   /** This function is run once each time the robot enters autonomous mode. */
   @Override
   public void autonomousInit() {
+    //Resets the timer to 15 seconds and begins the autonomous command provided by robotcontainer
     m_timer.restart();
      m_autonomousCommand = m_RobotContainer.getAutonomousCommand();
 
@@ -68,6 +76,7 @@ public class Robot extends TimedRobot {
   /** This function is called once each time the robot enters teleoperated mode. */
   @Override
   public void teleopInit() {
+    //Ends the autonomous command
     if (m_autonomousCommand != null) {
       m_autonomousCommand.cancel();
     }
@@ -76,6 +85,7 @@ public class Robot extends TimedRobot {
   /** This function is called periodically during teleoperated mode. */
   @Override
   public void teleopPeriodic() {
+    //Ignore, this is for differential drive which we are not using.
     m_robotDrive.arcadeDrive(-m_controller.getLeftY(), -m_controller.getRightX());
   }
 
