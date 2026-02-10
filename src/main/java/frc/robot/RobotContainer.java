@@ -25,13 +25,14 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Joystick;
 import frc.robot.commands.ClimbAlign;
 import frc.robot.commands.TeleopSwerve;
+import frc.robot.subsystems.Flywheel;
 import frc.robot.subsystems.Swerve;
 import frc.robot.subsystems.Vision;
 
 public class RobotContainer {
     
 //Creates an XBOX Controller and Joystick object for our driver and operator
-private final XboxController controller = new XboxController(0);
+public final XboxController controller = new XboxController(0);
 private final Joystick operator = new Joystick(1);
 
 //These three variables represent the id's of the axis' on the Xbox Controller's sticks.
@@ -66,9 +67,9 @@ private final SendableChooser<Command> autoChooser;
 //s_optics - Our camera system powered by PhotonVision on an OrangePI
 private final Swerve s_swerve = new Swerve();
 private final Vision s_optics = new Vision("MainCam");
-
+private final Flywheel s_Flywheel = new Flywheel(8);
 public RobotContainer() {
-
+    s_Flywheel.setDefaultCommand(new Command() {s_Flywheel.periodic()});
     //Sets our s_swerve to always be following the TeleopSwerve command when not being used by any other systems
     s_swerve.setDefaultCommand(
         new TeleopSwerve(
@@ -79,6 +80,7 @@ public RobotContainer() {
             () -> controller.getRawAxis(rotationAxis), 
             () -> false)
     );
+
 
 
     //-----------------Autonomous Command Setup---------------------------------------------

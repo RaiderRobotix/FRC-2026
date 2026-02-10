@@ -10,8 +10,10 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.motorcontrol.PWMSparkMax;
+// import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+// import frc.robot.subsystems.Flywheel;
 
 /**
  * The methods in this class are called automatically corresponding to each mode, as described in
@@ -31,9 +33,11 @@ public class Robot extends TimedRobot {
   private RobotContainer m_RobotContainer;
   private Command m_autonomousCommand;
 
+  // private Flywheel  m_flywheel = new Flywheel(8);
+
   /** Called once at the beginning of the robot program. */
   public Robot() {
-
+    
     SendableRegistry.addChild(m_robotDrive, m_leftDrive);
     SendableRegistry.addChild(m_robotDrive, m_rightDrive);
 
@@ -44,12 +48,19 @@ public class Robot extends TimedRobot {
 
     //Initializes the robotContainer object
     m_RobotContainer = new RobotContainer();
+
+
   }
 
 
   public void robotPeriodic() {
     //Initializes the command scheduler which handles any commands given to different subsystems. 
     CommandScheduler.getInstance().run();
+    // SmartDashboard.putNumber("Distance from Pitch", m_RobotContainer.s_optics.getDistanceFromPitchVal());
+    // SmartDashboard.putNumber("Target RPM", Flywheel.v0ToRPM(Flywheel.distanceToV0(m_RobotContainer.s_optics.getDistanceFromPitchVal(), 67)));
+    // SmartDashboard.putNumber("RPM", m_flywheel.getRPM());
+    // m_flywheel.setRPM(Flywheel.v0ToRPM(Flywheel.distanceToV0(m_RobotContainer.s_optics.getDistanceFromPitchVal(), 67)));
+    // m_flywheel.periodic();
   }
 
 
