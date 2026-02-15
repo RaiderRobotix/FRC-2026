@@ -14,20 +14,24 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 
 /**
- * The methods in this class are called automatically corresponding to each mode, as described in
- * the TimedRobot documentation. If you change the name of this class or the package after creating
- * this project, you must also update the manifest file in the resource directory.
+ * The methods in this class are called automatically corresponding to each
+ * mode, as described in
+ * the TimedRobot documentation. If you change the name of this class or the
+ * package after creating
+ * this project, you must also update the manifest file in the resource
+ * directory.
  */
 public class Robot extends TimedRobot {
-  //We don't use differential drive, so ignore any code relating to m_leftDrive, m_rightDrive, or m_robotDrive
+  // We don't use differential drive, so ignore any code relating to m_leftDrive,
+  // m_rightDrive, or m_robotDrive
   private final PWMSparkMax m_leftDrive = new PWMSparkMax(0);
   private final PWMSparkMax m_rightDrive = new PWMSparkMax(1);
-  private final DifferentialDrive m_robotDrive =
-      new DifferentialDrive(m_leftDrive::set, m_rightDrive::set);
+  private final DifferentialDrive m_robotDrive = new DifferentialDrive(m_leftDrive::set, m_rightDrive::set);
   private final XboxController m_controller = new XboxController(0);
   private final Timer m_timer = new Timer();
 
-  //We use RobotContainer to set up all our subsystems, autonomous, and teleoperated commands. 
+  // We use RobotContainer to set up all our subsystems, autonomous, and
+  // teleoperated commands.
   private RobotContainer m_RobotContainer;
   private Command m_autonomousCommand;
 
@@ -42,23 +46,23 @@ public class Robot extends TimedRobot {
     // gearbox is constructed, you might have to invert the left side instead.
     m_rightDrive.setInverted(true);
 
-    //Initializes the robotContainer object
+    // Initializes the robotContainer object
     m_RobotContainer = new RobotContainer();
   }
 
-
   public void robotPeriodic() {
-    //Initializes the command scheduler which handles any commands given to different subsystems. 
+    // Initializes the command scheduler which handles any commands given to
+    // different subsystems.
     CommandScheduler.getInstance().run();
   }
-
 
   /** This function is run once each time the robot enters autonomous mode. */
   @Override
   public void autonomousInit() {
-    //Resets the timer to 15 seconds and begins the autonomous command provided by robotcontainer
+    // Resets the timer to 15 seconds and begins the autonomous command provided by
+    // robotcontainer
     m_timer.restart();
-     m_autonomousCommand = m_RobotContainer.getAutonomousCommand();
+    m_autonomousCommand = m_RobotContainer.getAutonomousCommand();
 
     // schedule the autonomous command (example)
     if (m_autonomousCommand != null) {
@@ -70,13 +74,15 @@ public class Robot extends TimedRobot {
   @Override
   public void autonomousPeriodic() {
     // Drive for 2 seconds
-    
+
   }
 
-  /** This function is called once each time the robot enters teleoperated mode. */
+  /**
+   * This function is called once each time the robot enters teleoperated mode.
+   */
   @Override
   public void teleopInit() {
-    //Ends the autonomous command
+    // Ends the autonomous command
     if (m_autonomousCommand != null) {
       m_autonomousCommand.cancel();
     }
@@ -85,15 +91,17 @@ public class Robot extends TimedRobot {
   /** This function is called periodically during teleoperated mode. */
   @Override
   public void teleopPeriodic() {
-    //Ignore, this is for differential drive which we are not using.
+    // Ignore, this is for differential drive which we are not using.
     m_robotDrive.arcadeDrive(-m_controller.getLeftY(), -m_controller.getRightX());
   }
 
   /** This function is called once each time the robot enters test mode. */
   @Override
-  public void testInit() {}
+  public void testInit() {
+  }
 
   /** This function is called periodically during test mode. */
   @Override
-  public void testPeriodic() {}
+  public void testPeriodic() {
+  }
 }

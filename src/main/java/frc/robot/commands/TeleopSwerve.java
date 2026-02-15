@@ -9,9 +9,8 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
 
-
-public class TeleopSwerve extends Command {    
-    private Swerve s_Swerve;    
+public class TeleopSwerve extends Command {
+    private Swerve s_Swerve;
     private XboxController s_driver;
     private DoubleSupplier translationSup;
     private DoubleSupplier strafeSup;
@@ -19,7 +18,8 @@ public class TeleopSwerve extends Command {
     private BooleanSupplier robotCentricSup;
     private double maxSpeed;
 
-    public TeleopSwerve(Swerve s_Swerve, XboxController s_driver ,DoubleSupplier translationSup, DoubleSupplier strafeSup, DoubleSupplier rotationSup, BooleanSupplier robotCentricSup) {
+    public TeleopSwerve(Swerve s_Swerve, XboxController s_driver, DoubleSupplier translationSup,
+            DoubleSupplier strafeSup, DoubleSupplier rotationSup, BooleanSupplier robotCentricSup) {
         this.s_Swerve = s_Swerve;
         this.s_driver = s_driver;
         addRequirements(s_Swerve);
@@ -32,9 +32,7 @@ public class TeleopSwerve extends Command {
 
     @Override
     public void execute() {
-        /* Get Values, Deadband*/
-
-        
+        /* Get Values, Deadband */
 
         double translationVal = translationSup.getAsDouble();
         double strafeVal = strafeSup.getAsDouble();
@@ -42,10 +40,9 @@ public class TeleopSwerve extends Command {
 
         /* Drive */
         s_Swerve.drive(
-            new Translation2d(translationVal, strafeVal).times(Constants.kMaxSpeedMetersPerSecond), 
-            rotationVal * Constants.kMaxAngularSpeed, 
-            !robotCentricSup.getAsBoolean(), 
-            true
-        );
+                new Translation2d(translationVal, strafeVal).times(Constants.kMaxSpeedMetersPerSecond),
+                rotationVal * Constants.kMaxAngularSpeed,
+                !robotCentricSup.getAsBoolean(),
+                true);
     }
 }
