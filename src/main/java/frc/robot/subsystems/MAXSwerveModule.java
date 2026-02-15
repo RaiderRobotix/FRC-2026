@@ -1,35 +1,18 @@
 package frc.robot.subsystems;
 
 
-import com.revrobotics.AbsoluteEncoder;
 import com.revrobotics.RelativeEncoder;
-import com.revrobotics.spark.ClosedLoopSlot;
 import com.revrobotics.spark.SparkClosedLoopController;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.SparkBase.ControlType;
 import com.revrobotics.spark.SparkBase.PersistMode;
 import com.revrobotics.spark.SparkBase.ResetMode;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
-import com.revrobotics.spark.SparkClosedLoopController;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-
-import frc.lib.util.swerveUtil.CTREModuleState;
-
-
 import com.ctre.phoenix6.hardware.CANcoder;
-import com.fasterxml.jackson.databind.type.ResolvedRecursiveType;
-
-import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.controller.PIDController;
-import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
-import edu.wpi.first.wpilibj.motorcontrol.Spark;
-import frc.lib.math.Conversions;
-
-import frc.robot.Configs;
-
 import frc.robot.Configs;
 import frc.robot.Constants;
 
