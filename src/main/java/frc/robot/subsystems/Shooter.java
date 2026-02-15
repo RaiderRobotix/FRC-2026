@@ -71,4 +71,10 @@ public class Shooter extends SubsystemBase{
         leftShooter.set(-output);
         rightShooter.set(-output);
     }
+
+    //Runs shooters according to a custom output double (From -1 to 1). Most likely used in junction with vision
+    public void runShootersCustom(double customOutput){
+        leftShooter.set(customOutput);
+        rightShooter.set(customOutput);
+    }
 }

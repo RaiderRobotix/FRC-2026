@@ -95,6 +95,13 @@ public RobotContainer() {
         s_swerve.resetOdometry(pose);
     }, s_swerve));
     NamedCommands.registerCommand("alignToClimb", new ClimbAlign(s_swerve, s_optics, 0, 67));
+    NamedCommands.registerCommand("rotateToTag", Commands.runOnce(() -> {
+        double angle = s_swerve.isBlueAlliance() ? Math.PI : 0;
+        s_swerve.adjustGyro(angle);
+        Pose2d current_pose = s_swerve.getPose();
+        Pose2d pose = new Pose2d(current_pose.getX(), current_pose.getY(), new Rotation2d(angle));
+        s_swerve.resetOdometry(pose);
+    }, s_swerve));
 
 
     //Builds an auton using a name. This name should match an auton in PathPlanner

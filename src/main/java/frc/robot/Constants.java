@@ -18,7 +18,7 @@ public class Constants {
 
     public static final double stickDeadband = 0.1;
 
-
+    public static final double gravity = 386.08858;
 
     public static final boolean invertGyro = true; // Always ensure Gyro is CCW+ CW-
     

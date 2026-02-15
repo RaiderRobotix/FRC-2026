@@ -63,7 +63,7 @@ public class Vision extends SubsystemBase{
     //Updates the yaw value
     public double updateTargetYaw(List<PhotonTrackedTarget> targets, int id){
         if(id == -1){
-            return 0.0;
+            return 5;
         }
         double num = targets.get(0).getYaw();
         return num;
@@ -87,10 +87,5 @@ public class Vision extends SubsystemBase{
     public double getDistanceFromPitchVal(){
         return (51.0-12.0)/Math.tan((Math.PI*(pitchval+30))/180);
     }
-
-
-
-    
-        
 
 }
