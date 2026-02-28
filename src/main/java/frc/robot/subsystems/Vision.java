@@ -1,96 +1,154 @@
 package frc.robot.subsystems;
 
-import edu.wpi.first.math.Matrix;
-import edu.wpi.first.math.VecBuilder;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.numbers.N1;
-import edu.wpi.first.math.numbers.N3;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
-
-import java.util.List;
 import java.util.Optional;
+
 import org.photonvision.EstimatedRobotPose;
 import org.photonvision.PhotonCamera;
 import org.photonvision.PhotonPoseEstimator;
-import org.photonvision.targeting.PhotonPipelineResult;
-import org.photonvision.targeting.PhotonTrackedTarget;
 
-public class Vision extends SubsystemBase{
-    //Our camera we will be using for vision purposes
-    private final PhotonCamera camera;
+import edu.wpi.first.apriltag.AprilTagFieldLayout;
+import edu.wpi.first.apriltag.AprilTagFields;
+import edu.wpi.first.math.geometry.Transform3d;
+import edu.wpi.first.math.geometry.Translation3d;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
-    //The results given by the camera
-    private PhotonPipelineResult result;
-    
-    //The list of targets based off the results
-    private List<PhotonTrackedTarget> targets;
+public class Vision extends SubsystemBase {
 
-    //Yaw of the target
-    private double yawval = 0.0;
+    AprilTagFieldLayout fieldLayout = AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltWelded);
+    // The coordinates of the center of the hub on the field.
+    private Translation3d hubPose;
 
-    //Pitch of the target
-    private double pitchval = 0.0;
-    
-    //Creates the vision object from the name passed
-    public Vision(String name){
-        camera = new PhotonCamera(name);
+    private final PhotonCamera camera1;
+    private final PhotonCamera camera2;
+
+    private final PhotonPoseEstimator photonEstimator1;
+    private final PhotonPoseEstimator photonEstimator2;
+
+    private final Transform3d kRobotToCam1 = new Transform3d();
+    private final Transform3d kRobotToCam2 = new Transform3d();
+
+    private double[] distanceToHubArray = new double[2];
+    private double[] yawArray = new double[2];
+    private double[] pitchArray = new double[2];
+    private double[] rollArray = new double[2];
+
+    /**
+     * Constructor for the Vision subsystem. Initializes the two cameras and their corresponding pose estimators
+     * @param camera1 the name of the first camera as configured in the PhotonVision software
+     * @param camera2 the name of the second camera as configured in the PhotonVision software
+     * @param alliance the alliance the robot is on (red or blue). This is used to determine the location of the hub on the field, which is necessary for calculating the distance to the hub
+     */
+    public Vision(String camera1, String camera2, Optional<Alliance> alliance) {
+        if(alliance.isPresent() && alliance.get() == Alliance.Red) {
+            hubPose = new Translation3d(0,0,0);
+        } else {
+            hubPose = new Translation3d(0, 0, 0);
+        }
+
+        this.camera1 = new PhotonCamera(camera1);
+        this.camera2 = new PhotonCamera(camera2);
+
+        photonEstimator1 = new PhotonPoseEstimator(fieldLayout, kRobotToCam1);
+        photonEstimator2 = new PhotonPoseEstimator(fieldLayout, kRobotToCam2);
     }
 
-    //Periodically updates the result, the target list, the yaw, and the pitch, and outputs information to smartDashboard
-    @Override
-    public void periodic(){
-        result = camera.getLatestResult();
-        targets = result.getTargets();
-        yawval = updateTargetYaw(targets, checkForTarget(targets));
-        pitchval = updateTargetPitch(targets, checkForTarget(targets));
-        SmartDashboard.putNumber("AprilTagYawVal", yawval);
-        SmartDashboard.putNumber("AprilTagPitch", pitchval);
-        SmartDashboard.putNumber("AprilTagDistanceFromPitch", getDistanceFromPitchVal());
-    }
-
-    //Goes through the list of targets and checks for a specific apriltag id
-    public int checkForTarget(List<PhotonTrackedTarget> targets){
-        for(int i = 0; i < targets.size(); i++){
-            if(targets.get(i).getFiducialId() == 3){
-                return i;
+    /**
+     * Processes the results from a given camera and returns an optional containing the estimated robot pose if it exists
+     * @param camera the camera to process the results from
+     * @param estimator the pose estimator to use to process the results from the camera
+     * @return an optional containing the estimated robot pose if it exists, or an empty optional if it doesn't
+     */
+    private Optional<EstimatedRobotPose> processCamera(PhotonCamera camera, PhotonPoseEstimator estimator) {
+        Optional<EstimatedRobotPose> visionEst = Optional.empty();
+        // Process each new result from the camera
+        for (var result : camera.getAllUnreadResults()) {
+            // Try this more accurate position estimator...
+            visionEst = estimator.estimateCoprocMultiTagPose(result);
+            if (visionEst.isEmpty()) {
+                // ...and try this if it fails
+                visionEst = estimator.estimateLowestAmbiguityPose(result);
             }
         }
-        //Returns -1 if it can't find any
-        return -1;
+        return visionEst;
     }
 
-    //Updates the yaw value
-    public double updateTargetYaw(List<PhotonTrackedTarget> targets, int id){
-        if(id == -1){
-            return 0.0;
-        }
-        double num = targets.get(0).getYaw();
-        return num;
+    @Override
+    public void periodic() {
+        processCamera(camera1, photonEstimator1).ifPresent(
+                est -> {
+                    updateState(est, 1);
+                });
+        processCamera(camera2, photonEstimator2).ifPresent(
+                est -> {
+                    updateState(est, 2);
+                });
+        outputToSmartDashboard();
+    }
+    /**
+     * Updates the yaw, pitch, roll, and distance to the hub arrays with the latest information from a given camera
+     * @param est the estimated robot pose from the camera
+     * @param cameraNum which camera the information is from (1 or 2)
+     */
+    private void updateState(EstimatedRobotPose est, int cameraNum) {
+        yawArray[cameraNum - 1] = est.estimatedPose.getRotation().getZ();
+        pitchArray[cameraNum - 1] = est.estimatedPose.getRotation().getY();
+        rollArray[cameraNum - 1] = est.estimatedPose.getRotation().getX();
+        distanceToHubArray[cameraNum - 1] = getDistanceToPose(est, hubPose);
+    }
+    /** 
+     * Outputs the yaw, pitch, roll, and distance to the hub to smartDashboard for debugging purposes
+    */
+    private void outputToSmartDashboard() {
+        SmartDashboard.putNumber("Vision Yaw", getYawVal());
+        SmartDashboard.putNumber("Vision Pitch", getPitchVal());
+        SmartDashboard.putNumber("Vision Roll", getRollVal());
+        SmartDashboard.putNumber("Vision Distance", getDistanceFromHub());
     }
 
-    //Updates the pitch value
-    public double updateTargetPitch(List<PhotonTrackedTarget> targets, int id){
-        if(id == -1){
-            return 0.0;
-        }
-        double num = targets.get(0).getPitch();
-        return num;
+    /**
+     * Returns the distance from the robot to a given pose
+     * 
+     * @param robotPose the pose of the robot
+     * @param otherPose the pose to calculate the distance to
+     * @return the distance to the given pose in meters
+     */
+    public double getDistanceToPose(EstimatedRobotPose robotPose, Translation3d otherPose) {
+        return robotPose.estimatedPose.getTranslation().getDistance(otherPose);
     }
 
-    //Returns the yaw
-    public double getYawVal(){
-        return yawval;
+    /**
+     * Returns the yaw of the robot by averaging the yaw as calculated by each camera 
+     * @return the yaw in degrees
+     */
+    public double getYawVal() {
+        return (yawArray[0] + yawArray[1]) / 2;
     }
 
-    //Returns the distance from the pitch value using a lot of trignometry [very hard work :(]
-    public double getDistanceFromPitchVal(){
-        return (51.0-12.0)/Math.tan((Math.PI*(pitchval+30))/180);
+    /**
+     * Returns the pitch of the robot by averaging the pitch as calculated by each camera 
+     * @return the pitch in degrees
+     */
+    public double getPitchVal() {
+        return (pitchArray[0] + pitchArray[1]) / 2;
     }
 
+    /**
+     * Returns the roll of the robot by averaging the roll as calculated by each camera 
+     * @return the roll in degrees
+     */
+    public double getRollVal() {
+        return (rollArray[0] + rollArray[1]) / 2;
+    }
 
-
-    
-        
-
+    /**
+     * Returns the distance to the center of the hub by averaging the distance to
+     * the hub as calculated by each cameras
+     * 
+     * @return the distance to the center of the hub in meters
+     */
+    public double getDistanceFromHub() {
+        return (distanceToHubArray[0] + distanceToHubArray[1]) / 2;
+    }
 }

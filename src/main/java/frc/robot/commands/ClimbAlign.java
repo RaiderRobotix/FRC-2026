@@ -28,7 +28,7 @@ public class ClimbAlign extends Command{
     @Override
     public void execute(){
         double y_translation = (s_optics.getYawVal()-(Math.atan(xFromTag/yFromTag)*180/Math.PI))/40;
-        double x_translation = (yFromTag-s_optics.getDistanceFromPitchVal())/100;
+        double x_translation = (yFromTag-s_optics.getDistanceFromHub())/100;
         s_swerve.drive(
         new Translation2d(x_translation, y_translation).times(Constants.kMaxSpeedMetersPerSecond), 
         (s_swerve.getHeading().getDegrees()/90) * Constants.kMaxAngularSpeed, 
