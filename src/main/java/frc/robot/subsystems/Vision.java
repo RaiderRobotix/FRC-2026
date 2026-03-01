@@ -8,20 +8,22 @@ import org.photonvision.PhotonPoseEstimator;
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
+import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class Vision extends SubsystemBase {
-    // The transform from the robot's center to each camera. This will need to be updated with the actual measurements of the robot and cameras
-    private final Transform3d kRobotToCam1 = new Transform3d();
-    private final Transform3d kRobotToCam2 = new Transform3d();
+    // The transform from the robot's center to each camera. This will need to be updated with the actual measurements of the robot and cameras. THIS IS IN THE ROBOCENTRIC COORDINATE SYSTEM
+    private final Transform3d kRobotToCam1 = new Transform3d(new Translation3d(0,0,0), new Rotation3d(0, Units.degreesToRadians(50), 0));
+    private final Transform3d kRobotToCam2 = kRobotToCam1;
     // The coordinates of the center of the hub on the field for each alliance
     private final Translation3d redHubPose = new Translation3d(Units.inchesToMeters(651.22-182.11), Units.inchesToMeters(317.69/2), 0);
-    private final Translation3d blueHubPose = new Translation3d(Units.inchesToMeters(182.11), Units.inchesToMeters(317.69/2), 0);
+    private final Translation3d blueHubPose = new Translation3d(Units.inchesToMeters(182.11), Units.inchesToMeters(317.69/2), 0);//4.625, 4.034663
 
     AprilTagFieldLayout fieldLayout = AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltWelded);
     private Translation3d hubPose;
@@ -43,18 +45,22 @@ public class Vision extends SubsystemBase {
      * @param camera2 the name of the second camera as configured in the PhotonVision software
      * @param alliance the alliance the robot is on (red or blue). This is used to determine the location of the hub on the field, which is necessary for calculating the distance to the hub
      */
-    public Vision(String camera1, String camera2, Optional<Alliance> alliance) {
+    public Vision(Optional<Alliance> alliance, String camera1, String camera2) {
         if(alliance.isPresent() && alliance.get() == Alliance.Red) {
             hubPose = redHubPose;
         } else {
             hubPose = blueHubPose;
         }
+        DriverStation.reportWarning(alliance.toString(), false);
 
         this.camera1 = new PhotonCamera(camera1);
         this.camera2 = new PhotonCamera(camera2);
 
         photonEstimator1 = new PhotonPoseEstimator(fieldLayout, kRobotToCam1);
         photonEstimator2 = new PhotonPoseEstimator(fieldLayout, kRobotToCam2);
+    }
+    public Vision (Optional<Alliance> alliance, String camera1) {
+        this(alliance, camera1, camera1);
     }
 
     /**
@@ -99,6 +105,7 @@ public class Vision extends SubsystemBase {
         pitchArray[cameraNum - 1] = est.estimatedPose.getRotation().getY();
         rollArray[cameraNum - 1] = est.estimatedPose.getRotation().getX();
         distanceToHubArray[cameraNum - 1] = getDistanceToPose(est, hubPose);
+        SmartDashboard.putNumber(cameraNum-1 +"test1", est.estimatedPose.getX());
     }
     /** 
      * Outputs the yaw, pitch, roll, and distance to the hub to smartDashboard for debugging purposes
@@ -108,6 +115,7 @@ public class Vision extends SubsystemBase {
         SmartDashboard.putNumber("Vision Pitch", getPitchVal());
         SmartDashboard.putNumber("Vision Roll", getRollVal());
         SmartDashboard.putNumber("Vision Distance", getDistanceFromHub());
+        // SmartDashboard.putNumber("Field-relative x pose", );
     }
 
     /**
@@ -118,7 +126,8 @@ public class Vision extends SubsystemBase {
      * @return the distance to the given pose in meters
      */
     public double getDistanceToPose(EstimatedRobotPose robotPose, Translation3d otherPose) {
-        return robotPose.estimatedPose.getTranslation().getDistance(otherPose);
+        Translation3d robotTranslation = robotPose.estimatedPose.getTranslation();
+        return new Translation3d(robotTranslation.getX(), robotTranslation.getY(), 0).getDistance(otherPose);
     }
 
     /**

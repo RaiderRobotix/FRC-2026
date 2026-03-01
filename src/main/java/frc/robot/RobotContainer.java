@@ -65,7 +65,7 @@ private final SendableChooser<Command> autoChooser;
 //s_swerve - Our Swerve Drive based off Neo Motors
 //s_optics - Our camera system powered by PhotonVision on an OrangePI
 private final Swerve s_swerve = new Swerve();
-private final Vision s_optics = new Vision("MainCam","SecondaryCam", DriverStation.getAlliance());
+private final Vision s_optics = new Vision(DriverStation.getAlliance(), "MainCam");
 
 public RobotContainer() {
 
