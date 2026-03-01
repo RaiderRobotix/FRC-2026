@@ -10,14 +10,20 @@ import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation3d;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class Vision extends SubsystemBase {
+    // The transform from the robot's center to each camera. This will need to be updated with the actual measurements of the robot and cameras
+    private final Transform3d kRobotToCam1 = new Transform3d();
+    private final Transform3d kRobotToCam2 = new Transform3d();
+    // The coordinates of the center of the hub on the field for each alliance
+    private final Translation3d redHubPose = new Translation3d(Units.inchesToMeters(651.22-182.11), Units.inchesToMeters(317.69/2), 0);
+    private final Translation3d blueHubPose = new Translation3d(Units.inchesToMeters(182.11), Units.inchesToMeters(317.69/2), 0);
 
     AprilTagFieldLayout fieldLayout = AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltWelded);
-    // The coordinates of the center of the hub on the field.
     private Translation3d hubPose;
 
     private final PhotonCamera camera1;
@@ -25,9 +31,6 @@ public class Vision extends SubsystemBase {
 
     private final PhotonPoseEstimator photonEstimator1;
     private final PhotonPoseEstimator photonEstimator2;
-
-    private final Transform3d kRobotToCam1 = new Transform3d();
-    private final Transform3d kRobotToCam2 = new Transform3d();
 
     private double[] distanceToHubArray = new double[2];
     private double[] yawArray = new double[2];
@@ -42,9 +45,9 @@ public class Vision extends SubsystemBase {
      */
     public Vision(String camera1, String camera2, Optional<Alliance> alliance) {
         if(alliance.isPresent() && alliance.get() == Alliance.Red) {
-            hubPose = new Translation3d(0,0,0);
+            hubPose = redHubPose;
         } else {
-            hubPose = new Translation3d(0, 0, 0);
+            hubPose = blueHubPose;
         }
 
         this.camera1 = new PhotonCamera(camera1);
