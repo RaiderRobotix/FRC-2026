@@ -65,7 +65,7 @@ private final SendableChooser<Command> autoChooser;
 //s_swerve - Our Swerve Drive based off Neo Motors
 //s_optics - Our camera system powered by PhotonVision on an OrangePI
 private final Swerve s_swerve = new Swerve();
-private final Vision s_optics = new Vision(DriverStation.getAlliance(), "MainCam");
+private final Vision s_optics = new Vision(DriverStation.getAlliance(),s_swerve.poseEstimator, "Cam1", "Cam2");
 
 public RobotContainer() {
 
@@ -131,7 +131,7 @@ private void configureButtonBindings() {
         controller, 
         () -> controller.getRawAxis(translationAxis),
         () -> controller.getRawAxis(strafeAxis),
-        () -> s_optics.getYawVal()/40,
+        () -> s_optics.getPose().getRotation().getDegrees() / 40,
         () -> true)
     );
 
