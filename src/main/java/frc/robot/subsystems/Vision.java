@@ -7,7 +7,6 @@ import org.photonvision.EstimatedRobotPose;
 import org.photonvision.PhotonCamera;
 import org.photonvision.PhotonPoseEstimator;
 import org.photonvision.targeting.PhotonTrackedTarget;
-
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.Matrix;
@@ -21,32 +20,35 @@ import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.util.Units;
-import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class Vision extends SubsystemBase {
-
+    AprilTagFieldLayout fieldLayout = AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltWelded);
     private Matrix<N3, N1> curStdDevs;
     // The transform from the robot's center to each camera. This will need to be
     // updated with the actual measurements of the robot and cameras. THIS IS IN THE
     // ROBOCENTRIC COORDINATE SYSTEM
     private final Transform3d kRobotToCam1 = new Transform3d(
-            new Translation3d(0.335, -0.18, 0.315),
+            new Translation3d(0.335, -0.18, Units.inchesToMeters(42)),
             new Rotation3d(Units.degreesToRadians(0), Units.degreesToRadians(60), Units.degreesToRadians(0)));
-            
+
     private final Transform3d kRobotToCam2 = new Transform3d(
-            new Translation3d(0.335, 0.18, 0.315),
+            new Translation3d(0.335, 0.18, Units.inchesToMeters(42)),
             new Rotation3d(Units.degreesToRadians(0), Units.degreesToRadians(60), Units.degreesToRadians(0)));
 
     // The coordinates of the center of the hub on the field for each alliance
-    private final Translation2d redHubPose = new Translation2d(Units.inchesToMeters(651.22 - 182.11),
-            Units.inchesToMeters(317.69 / 2));
-    private final Translation2d blueHubPose = new Translation2d(Units.inchesToMeters(182.11),
-            Units.inchesToMeters(317.69 / 2));// 4.625, 4.034663
+    private final Translation2d blueHubPose = new Translation2d(
+            fieldLayout.getTagPose(26).get().getX()
+                    + Units.inchesToMeters(47.0) / 2.0,
+            fieldLayout.getFieldWidth() / 2.0);
 
-    AprilTagFieldLayout fieldLayout = AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltWelded);
+    private final Translation2d redHubPose = new Translation2d(
+            fieldLayout.getTagPose(4).get().getX()
+                    - Units.inchesToMeters(47.0) / 2.0,
+            fieldLayout.getFieldWidth() / 2.0);
+
     private Translation2d hubPose;
 
     // The standard deviations of our vision estimated poses, which affect
@@ -79,17 +81,14 @@ public class Vision extends SubsystemBase {
      *                    determine the location of the hub on the field, which is
      *                    necessary for calculating the distance to the hub
      */
-    public Vision(Optional<Alliance> alliance, SwerveDrivePoseEstimator swervePoseEstimator, String camera1, String camera2) {
+    public Vision(Optional<Alliance> alliance, SwerveDrivePoseEstimator swervePoseEstimator, String camera1,
+            String camera2) {
         this.swervePoseEstimator = swervePoseEstimator;
-        // this.estConsumer = swervePoseEstimator::addVisionMeasurement;
         if (alliance.isPresent() && alliance.get() == Alliance.Red) {
             hubPose = redHubPose;
         } else {
             hubPose = blueHubPose;
         }
-
-        DriverStation.reportWarning(alliance.toString(), false);
-
         this.camera1 = new PhotonCamera(camera1);
         this.camera2 = new PhotonCamera(camera2);
 
@@ -122,7 +121,9 @@ public class Vision extends SubsystemBase {
         }
         if (!visionEst.isEmpty()) {
             var est = visionEst.get();
-            swervePoseEstimator.addVisionMeasurement(est.estimatedPose.toPose2d(), est.timestampSeconds, getEstimationStdDevs());
+            SmartDashboard.putNumber("Z"+camera, est.estimatedPose.getZ());
+            swervePoseEstimator.addVisionMeasurement(est.estimatedPose.toPose2d(), est.timestampSeconds,
+                    getEstimationStdDevs());
         }
         return visionEst;
     }
@@ -202,10 +203,12 @@ public class Vision extends SubsystemBase {
             }
         }
     }
+
     public Pose2d getPose() {
         return swervePoseEstimator.getEstimatedPosition();
     }
-    public double getDistanceFromHub(){
+
+    public double getDistanceFromHub() {
         return getPose().getTranslation().getDistance(hubPose);
     }
 }

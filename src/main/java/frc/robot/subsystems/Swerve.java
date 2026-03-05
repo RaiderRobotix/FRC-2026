@@ -187,12 +187,6 @@ public class Swerve extends SubsystemBase {
         SmartDashboard.putNumber("Gyro", getHeading().getDegrees());
         SmartDashboard.putBoolean("AutonSuccess", autonsuccess);
 
-        // SmartDashboard.putNumber("SPE x", poseEstimator.getEstimatedPosition().getX());
-        // SmartDashboard.putNumber("SPE y", poseEstimator.getEstimatedPosition().getY());
-        // // Translation2d robotTranslation = ;
-        // SmartDashboard.putNumber("SPE Distance to Hub", poseEstimator.getEstimatedPosition().getTranslation().getDistance(new Translation2d(Units.inchesToMeters(182.11),
-        //     Units.inchesToMeters(317.69 / 2))));
-
     }
 
     public void zeroGyro() {
