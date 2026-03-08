@@ -22,26 +22,59 @@ import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class Vision extends SubsystemBase {
-    private Matrix<N3, N1> curStdDevs;
     AprilTagFieldLayout fieldLayout = AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltWelded);
-    // The transform from the robot's center to each camera. This will need to be
-    // updated with the actual measurements of the robot and cameras. THIS IS IN THE
-    // ROBOCENTRIC COORDINATE SYSTEM
+
+    private final PhotonCamera camera1;
+    private final PhotonCamera camera2;
+
+    private final PhotonPoseEstimator photonEstimator1;
+    private final PhotonPoseEstimator photonEstimator2;
+    // Pose estimator that combines the vision pose estimates with the swerve
+    // drive's internal pose estimation to get a more accurate estimate of the
+    // robot's pose on the field. This is passed in from RobotContainer because it
+    // needs to be shared with the SwerveDrive subsystem, which uses it for its
+    // internal pose estimation.
+    private final SwerveDrivePoseEstimator swervePoseEstimator;
+    // Field2d object for visualizing the robot's pose and the camera poses on the
+    // field in SmartDashboard. Comment this out if it takes up too much bandwith,
+    // but it's really useful for checking that the pose estimates are accurate.
+    private Field2d visionField = new Field2d();
+
+    /*
+     * Robot Center: C
+     * Camera 1: 1
+     * Camera 2: 2
+     * 
+     * .... (SHOOTER) FRONT (SHOOTER)
+     * -y |------------C------------| +y
+     * ...|...1.................2...| +x
+     * ...|.........................|
+     * ...|........................ |
+     * ...|.........................|
+     * ...|.........................|
+     * ...|-------------------------| -x
+     * ...............BACK
+     * 
+     * The cameras are angled upwards at 60 degrees. They are also angled outwards
+     * at 5 degrees.
+     * The center of the robot is marked in blue marker on the physical robot. It is
+     * not at the bottom of the robot. It is on the perimeter.
+     */
     private final Transform3d kRobotToCam1 = new Transform3d(
-            new Translation3d(0.335, -0.18, Units.inchesToMeters(13.5)),
-            new Rotation3d(Units.degreesToRadians(0), Units.degreesToRadians(60), Units.degreesToRadians(0)));
-
+            new Translation3d(Units.inchesToMeters(-1.5), Units.inchesToMeters(-8.75), Units.inchesToMeters(3.75)),
+            new Rotation3d(0, Units.degreesToRadians(60), Units.degreesToRadians(-5)));
     private final Transform3d kRobotToCam2 = new Transform3d(
-            new Translation3d(0.335, 0.18, Units.inchesToMeters(13.5)),
-            new Rotation3d(Units.degreesToRadians(0), Units.degreesToRadians(60), Units.degreesToRadians(0)));
+            new Translation3d(Units.inchesToMeters(-1.5), Units.inchesToMeters(+8.75), Units.inchesToMeters(3.75)),
+            new Rotation3d(0, Units.degreesToRadians(60), Units.degreesToRadians(5)));
 
-
-    // The coordinates of the center of the hub on the field for each alliance. Don't change these.
+    // The coordinates of the center of the hub on the field for each alliance.
     private final Translation2d kBlueHubPose = new Translation2d(
             fieldLayout.getTagPose(26).get().getX()
                     + Units.inchesToMeters(47.0) / 2.0,
@@ -52,21 +85,12 @@ public class Vision extends SubsystemBase {
                     - Units.inchesToMeters(47.0) / 2.0,
             fieldLayout.getFieldWidth() / 2.0);
 
-    private Translation2d hubPose;
-
+    private Matrix<N3, N1> curStdDevs;
     // The standard deviations of our vision estimated poses, which affect
     // correction rate
     // (Fake values. Experiment and determine estimation noise on an actual robot.)
     public static final Matrix<N3, N1> kSingleTagStdDevs = VecBuilder.fill(4, 4, 8);
-    public static final Matrix<N3, N1> kMultiTagStdDevs = VecBuilder.fill(0.5, 0.5, 1);
-
-    private final PhotonCamera camera1;
-    private final PhotonCamera camera2;
-
-    private final PhotonPoseEstimator photonEstimator1;
-    private final PhotonPoseEstimator photonEstimator2;
-
-    private final SwerveDrivePoseEstimator swervePoseEstimator;
+    public static final Matrix<N3, N1> kMultiTagStdDevs = VecBuilder.fill(0.01026, 0.74034, 0.04732);
 
     /**
      * Constructor for the Vision subsystem. Initializes the two cameras and their
@@ -85,15 +109,8 @@ public class Vision extends SubsystemBase {
     public Vision(Optional<Alliance> alliance, SwerveDrivePoseEstimator swervePoseEstimator, String camera1,
             String camera2) {
         this.swervePoseEstimator = swervePoseEstimator;
-        if (alliance.isPresent() && alliance.get() == Alliance.Red) {
-            hubPose = kRedHubPose;
-        } else {
-            hubPose = kBlueHubPose;
-        }
         this.camera1 = new PhotonCamera(camera1);
         this.camera2 = new PhotonCamera(camera2);
-        SmartDashboard.putBoolean("Camera 1 Connected", this.camera1.isConnected());
-        SmartDashboard.putBoolean("Camera 2 Connected", this.camera2.isConnected());
 
         photonEstimator1 = new PhotonPoseEstimator(fieldLayout, kRobotToCam1);
         photonEstimator2 = new PhotonPoseEstimator(fieldLayout, kRobotToCam2);
@@ -123,6 +140,7 @@ public class Vision extends SubsystemBase {
         }
         if (!visionEst.isEmpty()) {
             var est = visionEst.get();
+            // visionField.getObject("VisionOnlyEstimate").setPose(est.estimatedPose.toPose2d());
             swervePoseEstimator.addVisionMeasurement(est.estimatedPose.toPose2d(), est.timestampSeconds,
                     getEstimationStdDevs());
         }
@@ -138,11 +156,29 @@ public class Vision extends SubsystemBase {
         SmartDashboard.putNumber("Y", getPose().getY());
         SmartDashboard.putNumber("Rotation", getPose().getRotation().getDegrees());
         SmartDashboard.putNumber("Distance to Hub", getDistanceFromHub());
+
+        SmartDashboard.putBoolean("Camera 1 Connected", this.camera1.isConnected());
+        SmartDashboard.putBoolean("Camera 2 Connected", this.camera2.isConnected());
+
+        visionField.setRobotPose(getPose());
+        if (this.camera1.isConnected()) {
+            visionField.getObject("Camera1")
+                    .setPose(getPose().plus(new Transform2d(kRobotToCam1.getTranslation().toTranslation2d(),
+                            kRobotToCam1.getRotation().toRotation2d())));
+        }
+        if (this.camera2.isConnected()) {
+            visionField.getObject("Camera2")
+                    .setPose(getPose().plus(new Transform2d(kRobotToCam2.getTranslation().toTranslation2d(),
+                            kRobotToCam2.getRotation().toRotation2d())));
+        }
+
+        SmartDashboard.putData("VisionField", visionField);
+
     }
 
     /**
-     * Returns the latest standard deviations of the estimated pose from {@link
-     * #getEstimatedGlobalPose()}, for use with {@link
+     * Returns the latest standard deviations of the estimated pose from, for use
+     * with {@link
      * edu.wpi.first.math.estimator.SwerveDrivePoseEstimator
      * SwerveDrivePoseEstimator}. This should
      * only be used when there are targets visible.
@@ -153,9 +189,11 @@ public class Vision extends SubsystemBase {
 
     /**
      * Calculates new standard deviations This algorithm is a heuristic that creates
-     * dynamic standard
-     * deviations based on number of tags, estimation strategy, and distance from
+     * dynamic standard deviations based on number of tags, estimation strategy, and
+     * distance from
      * the tags.
+     * 
+     * THIS IS CODE FROM PHOTONVISION'S EXAMPLE, NOT OURS.
      *
      * @param estimatedPose The estimated pose to guess standard deviations for.
      * @param targets       All targets in this camera frame
@@ -203,30 +241,69 @@ public class Vision extends SubsystemBase {
             }
         }
     }
+
     /**
-     * The pose is the position of the robot's center on the field, and the rotation is the robot's orientation in the field coordinate system. 
-     * @return the latest estimated pose of the robot on the field according to the vision system and the swerve drive pose estimator
+     * Gets the position of the hub on the field based on the alliance color.
+     * 
+     * @return Position of the hub on the field as a Translation2d.
+     * 
+     */
+    private Translation2d getHub() {
+        if (DriverStation.getAlliance().get() == Alliance.Red) {
+            return kRedHubPose;
+        } else {
+            return kBlueHubPose;
+        }
+    }
+
+    /**
+     * The pose is the position of the robot's center (NOT THE ACTUAL CENTER---THE
+     * POINT MARKED WITH BLUE MARKER (SEE ABOVE)) on the field, and the rotation
+     * is the robot's orientation in the field coordinate system.
+     * 
+     * @return the latest estimated pose of the robot on the field according to the
+     *         vision system and the swerve drive pose estimator
      */
     public Pose2d getPose() {
         return swervePoseEstimator.getEstimatedPosition();
     }
+
     /**
-     * Calculates the distance from the robot to the hub using the latest estimated pose of the robot and the known position of the hub on the field. This is used for determining whether we are in range to shoot.
-     * @return the Pythagorean distance from the center of the robot to the center of the hub in meters. THIS DOES NOT INCLUDE VERTICAL (z) DISTANCE, ONLY HORIZONTAL (x,y) DISTANCE.
+     * Calculates the distance from the robot to the hub using the latest estimated
+     * pose of the robot and the known position of the hub on the field.
+     * 
+     * @return the Pythagorean distance from the "center" (see diagram above) of the
+     *         robot to the center
+     *         of the hub in meters. THIS DOES NOT INCLUDE VERTICAL (z) DISTANCE,
+     *         ONLY HORIZONTAL (x,y) DISTANCE.
      */
     public double getDistanceFromHub() {
-        return getPose().getTranslation().getDistance(hubPose);
+        return getPose().getTranslation().getDistance(getHub());
     }
+
     /**
-     * Calculates the distance from a given robot part to the hub using the latest estimated pose of the robot and the known position of the hub on the field.
-     * This will return the x and y components of the distance from the robot part to the hub, where the x component is the distance in the direction parallel to the field's length (positive towards the opponent's side) and the y component is the distance in the direction parallel to the field's width (positive towards the left when looking from the driver's station). 
+     * Calculates the distance from a given robot part to the hub using the latest
+     * estimated pose of the robot and the known position of the hub on the field.
+     * This will return the x and y components of the distance from the robot part
+     * to the hub, where the x component is the distance in the direction parallel
+     * to the field's length (positive towards the opponent's side) and the y
+     * component is the distance in the direction parallel to the field's width
+     * (positive towards the left when looking from the driver's station).
      * 
-     * @param robotPartPose The 2D (x,y) translation from the center of the robot to the robot part in the robot's coordinate system. For example, if the robot part is 0.5 meters in front of the robot's center and 0.2 meters to the left, this would be Translation2d(0.5, 0.2).
-     * @return an array containing the x and y components of the distance from the robot part to the hub in meters, where the first element is the x component and the second element is the y component.
+     * @param robotPartPose The 2D (x,y) translation from the point marked in blue
+     *                      on the physical robot (see diagram above) to
+     *                      the robot part in the robot's coordinate system. For
+     *                      example, if the robot part is 0.5 meters in front of the
+     *                      blue point and 0.2 meters to the left, this would be
+     *                      Translation2d(0.5, 0.2).
+     * @return an array containing the x and y components of the distance from the
+     *         robot part to the hub in meters, where the first element is the x
+     *         component and the second element is the y component.
      */
     public Double[] getComponentDistanceFromRobotPartToHub(Translation2d robotPartPose) {
-        Translation2d partPositionOnField = getPose().plus(new Transform2d(robotPartPose, new Rotation2d())).getTranslation();
-        Translation2d diff = partPositionOnField.minus(hubPose);
-        return new Double[] {diff.getX(), diff.getY()};
+        Translation2d partPositionOnField = getPose().plus(new Transform2d(robotPartPose, new Rotation2d()))
+                .getTranslation();
+        Translation2d diff = partPositionOnField.minus(getHub());
+        return new Double[] { diff.getX(), diff.getY() };
     }
 }
