@@ -68,11 +68,22 @@ public class Vision extends SubsystemBase {
      * not at the bottom of the robot. It is on the perimeter.
      */
     private final Transform3d kRobotToCam1 = new Transform3d(
-            new Translation3d(Units.inchesToMeters(-1.5), Units.inchesToMeters(-8.75), Units.inchesToMeters(3.75)),
+            new Translation3d(Units.inchesToMeters(1.5), Units.inchesToMeters(-8.75),
+                    Units.inchesToMeters(3.75)),
             new Rotation3d(0, Units.degreesToRadians(60), Units.degreesToRadians(-5)));
     private final Transform3d kRobotToCam2 = new Transform3d(
-            new Translation3d(Units.inchesToMeters(-1.5), Units.inchesToMeters(+8.75), Units.inchesToMeters(3.75)),
+            new Translation3d(Units.inchesToMeters(1.5), Units.inchesToMeters(+8.75),
+                    Units.inchesToMeters(3.75)),
             new Rotation3d(0, Units.degreesToRadians(60), Units.degreesToRadians(5)));
+
+    // private final Transform3d kRobotToCam1 = new Transform3d(
+    // new Translation3d(Units.inchesToMeters(0), Units.inchesToMeters(0),
+    // Units.inchesToMeters(13)),
+    // new Rotation3d(0, Units.degreesToRadians(60), Units.degreesToRadians(0)));
+    // private final Transform3d kRobotToCam2 = new Transform3d(
+    // new Translation3d(Units.inchesToMeters(0), Units.inchesToMeters(0),
+    // Units.inchesToMeters(13)),
+    // new Rotation3d(0, Units.degreesToRadians(60), Units.degreesToRadians(0)));
 
     // The coordinates of the center of the hub on the field for each alliance.
     private final Translation2d kBlueHubPose = new Translation2d(
@@ -82,7 +93,7 @@ public class Vision extends SubsystemBase {
 
     private final Translation2d kRedHubPose = new Translation2d(
             fieldLayout.getTagPose(4).get().getX()
-                    - Units.inchesToMeters(47.0) / 2.0,
+                    + Units.inchesToMeters(47.0) / 2.0,
             fieldLayout.getFieldWidth() / 2.0);
 
     private Matrix<N3, N1> curStdDevs;
@@ -90,7 +101,7 @@ public class Vision extends SubsystemBase {
     // correction rate
     // (Fake values. Experiment and determine estimation noise on an actual robot.)
     public static final Matrix<N3, N1> kSingleTagStdDevs = VecBuilder.fill(4, 4, 8);
-    public static final Matrix<N3, N1> kMultiTagStdDevs = VecBuilder.fill(0.01026, 0.74034, 0.04732);
+    public static final Matrix<N3, N1> kMultiTagStdDevs = VecBuilder.fill(1, 1, 0.2);
 
     /**
      * Constructor for the Vision subsystem. Initializes the two cameras and their
@@ -114,6 +125,8 @@ public class Vision extends SubsystemBase {
 
         photonEstimator1 = new PhotonPoseEstimator(fieldLayout, kRobotToCam1);
         photonEstimator2 = new PhotonPoseEstimator(fieldLayout, kRobotToCam2);
+        visionField.getObject("BlueHub").setPose(kBlueHubPose.getX(), kBlueHubPose.getY(), new Rotation2d());
+        visionField.getObject("RedHub").setPose(kRedHubPose.getX(), kRedHubPose.getY(), new Rotation2d());
     }
 
     /**
@@ -140,9 +153,16 @@ public class Vision extends SubsystemBase {
         }
         if (!visionEst.isEmpty()) {
             var est = visionEst.get();
-            // visionField.getObject("VisionOnlyEstimate").setPose(est.estimatedPose.toPose2d());
-            swervePoseEstimator.addVisionMeasurement(est.estimatedPose.toPose2d(), est.timestampSeconds,
-                    getEstimationStdDevs());
+            visionField.getObject("VisionOnlyEstimate"+camera).setPose(est.estimatedPose.toPose2d());
+            // swervePoseEstimator.resetRotation(
+            // est.estimatedPose.getRotation().toRotation2d());
+            if (est.estimatedPose.toPose2d().getTranslation().getDistance(getPose().getTranslation()) < 0.8) {
+                swervePoseEstimator.addVisionMeasurement(est.estimatedPose.toPose2d(), est.timestampSeconds,
+                        getEstimationStdDevs());
+            } else {
+                swervePoseEstimator.addVisionMeasurement(est.estimatedPose.toPose2d(), est.timestampSeconds,
+                        kSingleTagStdDevs);
+            }
         }
         return visionEst;
     }
@@ -165,14 +185,21 @@ public class Vision extends SubsystemBase {
             visionField.getObject("Camera1")
                     .setPose(getPose().plus(new Transform2d(kRobotToCam1.getTranslation().toTranslation2d(),
                             kRobotToCam1.getRotation().toRotation2d())));
+        } else {
+            visionField.getObject("Camera1").setPose(0, 0, new Rotation2d());
         }
         if (this.camera2.isConnected()) {
             visionField.getObject("Camera2")
                     .setPose(getPose().plus(new Transform2d(kRobotToCam2.getTranslation().toTranslation2d(),
                             kRobotToCam2.getRotation().toRotation2d())));
+        } else {
+            visionField.getObject("Camera2").setPose(0, 0, new Rotation2d());
         }
 
         SmartDashboard.putData("VisionField", visionField);
+
+        SmartDashboard.putNumberArray("Component dist to hub",
+                getComponentDistanceFromRobotPartToHub(new Translation2d(0, 0)));
 
     }
 

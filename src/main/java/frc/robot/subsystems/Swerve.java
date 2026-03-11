@@ -100,9 +100,9 @@ public class Swerve extends SubsystemBase {
                 getGyroYaw(),
                 getModulePositions(),
                 new Pose2d(),
-                VecBuilder.fill(0.1, 0.1, 0.1), // State measurement standard deviations. X and Y are in meters, and
+                VecBuilder.fill(0.1, 0.1, 0.5), // State measurement standard deviations. X and Y are in meters, and
                                                 // heading is in radians
-                VecBuilder.fill(1, 1, 1) // Vision measurement standard deviations. X and Y are in meters, and heading
+                VecBuilder.fill(1, 1, 1.5) // Vision measurement standard deviations. X and Y are in meters, and heading
                                          // is in radians);
         );
         // Autonomous setup -- This comes from Path Planner and is NOT my code.
