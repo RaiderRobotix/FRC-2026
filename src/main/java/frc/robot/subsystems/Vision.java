@@ -1,5 +1,7 @@
 package frc.robot.subsystems;
 
+import static edu.wpi.first.units.Units.Rotation;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -75,15 +77,6 @@ public class Vision extends SubsystemBase {
             new Translation3d(Units.inchesToMeters(1.5), Units.inchesToMeters(+8.75),
                     Units.inchesToMeters(3.75)),
             new Rotation3d(0, Units.degreesToRadians(60), Units.degreesToRadians(5)));
-
-    // private final Transform3d kRobotToCam1 = new Transform3d(
-    // new Translation3d(Units.inchesToMeters(0), Units.inchesToMeters(0),
-    // Units.inchesToMeters(13)),
-    // new Rotation3d(0, Units.degreesToRadians(60), Units.degreesToRadians(0)));
-    // private final Transform3d kRobotToCam2 = new Transform3d(
-    // new Translation3d(Units.inchesToMeters(0), Units.inchesToMeters(0),
-    // Units.inchesToMeters(13)),
-    // new Rotation3d(0, Units.degreesToRadians(60), Units.degreesToRadians(0)));
 
     // The coordinates of the center of the hub on the field for each alliance.
     private final Translation2d kBlueHubPose = new Translation2d(
@@ -332,5 +325,14 @@ public class Vision extends SubsystemBase {
                 .getTranslation();
         Translation2d diff = partPositionOnField.minus(getHub());
         return new Double[] { diff.getX(), diff.getY() };
+    }
+    /**
+     * Calculates the angle from the robot to the hub using the latest estimated pose of the robot and the known position of the hub on the field. The angle is measured counterclockwise from the robot's forward direction. 
+     * @return The angle to the hub in degrees.
+     */
+    public double getYawToHub() {
+        Pose2d robotPose = getPose();
+        Rotation2d angleToHub = robotPose.getRotation().minus(new Rotation2d(Math.atan2(getHub().getY() - robotPose.getY(), getHub().getX() - robotPose.getX())));
+        return angleToHub.getDegrees();
     }
 }
