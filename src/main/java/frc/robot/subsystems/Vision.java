@@ -146,7 +146,7 @@ public class Vision extends SubsystemBase {
         }
         if (!visionEst.isEmpty()) {
             var est = visionEst.get();
-            visionField.getObject("VisionOnlyEstimate"+camera).setPose(est.estimatedPose.toPose2d());
+            visionField.getObject("VisionOnlyEstimate" + camera).setPose(est.estimatedPose.toPose2d());
             // swervePoseEstimator.resetRotation(
             // est.estimatedPose.getRotation().toRotation2d());
             if (est.estimatedPose.toPose2d().getTranslation().getDistance(getPose().getTranslation()) < 0.8) {
@@ -326,13 +326,34 @@ public class Vision extends SubsystemBase {
         Translation2d diff = partPositionOnField.minus(getHub());
         return new Double[] { diff.getX(), diff.getY() };
     }
+
     /**
-     * Calculates the angle from the robot to the hub using the latest estimated pose of the robot and the known position of the hub on the field. The angle is measured counterclockwise from the robot's forward direction. 
+     * Calculates the angle from the robot to the hub using the latest estimated
+     * pose of the robot and the known position of the hub on the field. The angle
+     * is measured counterclockwise from the robot's forward direction.
+     * 
      * @return The angle to the hub in degrees.
      */
     public double getYawToHub() {
+        return getYawFromRobotPartToHub(new Translation2d(0, 0));
+    }
+
+    /**
+     * Calculates the angle from a specific robot part to the hub using the latest estimated
+     * pose of the robot and the known position of the hub on the field. The angle
+     * is measured counterclockwise from the robot's forward direction.
+     * 
+     * @param robotPartPose The 2D (x,y) translation from the point marked in blue
+     *                      on the physical robot (see diagram above) to
+     *                      the robot part in the robot's coordinate system.
+     * @return The angle to the hub in degrees.
+     */
+    public double getYawFromRobotPartToHub(Translation2d robotPartPose) {
         Pose2d robotPose = getPose();
-        Rotation2d angleToHub = robotPose.getRotation().minus(new Rotation2d(Math.atan2(getHub().getY() - robotPose.getY(), getHub().getX() - robotPose.getX())));
+        Double[] distances = getComponentDistanceFromRobotPartToHub(robotPartPose);
+        double deltaX = distances[0];
+        double deltaY = distances[1];
+        Rotation2d angleToHub = robotPose.getRotation().minus(new Rotation2d(Math.atan2(deltaY, deltaX)));
         return angleToHub.getDegrees();
     }
 }
