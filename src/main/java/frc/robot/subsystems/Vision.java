@@ -1,7 +1,5 @@
 package frc.robot.subsystems;
 
-import static edu.wpi.first.units.Units.Rotation;
-
 import java.util.List;
 import java.util.Optional;
 
@@ -25,6 +23,7 @@ import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -54,7 +53,7 @@ public class Vision extends SubsystemBase {
      * Camera 1: 1
      * Camera 2: 2
      * 
-     * .... (SHOOTER) FRONT (SHOOTER)
+     * ....(SHOOTER) FRONT (SHOOTER)
      * -y |------------C------------| +y
      * ...|...1.................2...| +x
      * ...|.........................|
@@ -69,13 +68,23 @@ public class Vision extends SubsystemBase {
      * The center of the robot is marked in blue marker on the physical robot. It is
      * not at the bottom of the robot. It is on the perimeter.
      */
+    // private final Transform3d kRobotToCam1 = new Transform3d(
+    // new Translation3d(Units.inchesToMeters(11), Units.inchesToMeters(-8.75),
+    // Units.inchesToMeters(3.75)),
+    // new Rotation3d(0, Units.degreesToRadians(60), Units.degreesToRadians(-5)));
+    // private final Transform3d kRobotToCam2 = new Transform3d(
+    // new Translation3d(Units.inchesToMeters(11), Units.inchesToMeters(+8.75),
+    // Units.inchesToMeters(3.75)),
+    // new Rotation3d(0, Units.degreesToRadians(60), Units.degreesToRadians(5)));
+
+    // Practice bot:
     private final Transform3d kRobotToCam1 = new Transform3d(
-            new Translation3d(Units.inchesToMeters(1.5), Units.inchesToMeters(-8.75),
-                    Units.inchesToMeters(3.75)),
+            new Translation3d(Units.inchesToMeters(13), Units.inchesToMeters(-8.75),
+                    Units.inchesToMeters(12.5)),
             new Rotation3d(0, Units.degreesToRadians(60), Units.degreesToRadians(-5)));
     private final Transform3d kRobotToCam2 = new Transform3d(
-            new Translation3d(Units.inchesToMeters(1.5), Units.inchesToMeters(+8.75),
-                    Units.inchesToMeters(3.75)),
+            new Translation3d(Units.inchesToMeters(13), Units.inchesToMeters(+8.75),
+                    Units.inchesToMeters(12.5)),
             new Rotation3d(0, Units.degreesToRadians(60), Units.degreesToRadians(5)));
 
     // The coordinates of the center of the hub on the field for each alliance.
@@ -90,11 +99,16 @@ public class Vision extends SubsystemBase {
             fieldLayout.getFieldWidth() / 2.0);
 
     private Matrix<N3, N1> curStdDevs;
+
+    private double cam1LatestResultTimestamp = Timer.getFPGATimestamp();
+
+    private double cam2LatestResultTimestamp = Timer.getFPGATimestamp();
+
     // The standard deviations of our vision estimated poses, which affect
     // correction rate
     // (Fake values. Experiment and determine estimation noise on an actual robot.)
     public static final Matrix<N3, N1> kSingleTagStdDevs = VecBuilder.fill(4, 4, 8);
-    public static final Matrix<N3, N1> kMultiTagStdDevs = VecBuilder.fill(1, 1, 0.2);
+    public static final Matrix<N3, N1> kMultiTagStdDevs = VecBuilder.fill(0.3, 0.3, 0.6);
 
     /**
      * Constructor for the Vision subsystem. Initializes the two cameras and their
@@ -146,10 +160,13 @@ public class Vision extends SubsystemBase {
         }
         if (!visionEst.isEmpty()) {
             var est = visionEst.get();
-            visionField.getObject("VisionOnlyEstimate" + camera).setPose(est.estimatedPose.toPose2d());
-            // swervePoseEstimator.resetRotation(
-            // est.estimatedPose.getRotation().toRotation2d());
-            if (est.estimatedPose.toPose2d().getTranslation().getDistance(getPose().getTranslation()) < 0.8) {
+
+            if (camera == camera1) {
+                cam1LatestResultTimestamp = est.timestampSeconds;
+            } else if (camera == camera2) {
+                cam2LatestResultTimestamp = est.timestampSeconds;
+            }
+            if (est.estimatedPose.toPose2d().getTranslation().getDistance(getPose().getTranslation()) < 0.5) {
                 swervePoseEstimator.addVisionMeasurement(est.estimatedPose.toPose2d(), est.timestampSeconds,
                         getEstimationStdDevs());
             } else {
@@ -165,19 +182,21 @@ public class Vision extends SubsystemBase {
         processCamera(camera1, photonEstimator1);
         processCamera(camera2, photonEstimator2);
 
-        SmartDashboard.putNumber("X", getPose().getX());
-        SmartDashboard.putNumber("Y", getPose().getY());
-        SmartDashboard.putNumber("Rotation", getPose().getRotation().getDegrees());
-        SmartDashboard.putNumber("Distance to Hub", getDistanceFromHub());
+        SmartDashboard.putNumber("Vision/Rotation", getPose().getRotation().getDegrees());
+        SmartDashboard.putNumber("Vision/Distance to Hub", getDistanceFromHub());
 
-        SmartDashboard.putBoolean("Camera 1 Connected", this.camera1.isConnected());
-        SmartDashboard.putBoolean("Camera 2 Connected", this.camera2.isConnected());
+        SmartDashboard.putBoolean("Vision/Camera 1 Connected", this.camera1.isConnected());
+        SmartDashboard.putBoolean("Vision/Camera 2 Connected", this.camera2.isConnected());
+
+        SmartDashboard.putNumber("Vision/Yaw to hub", getYawToHub());
 
         visionField.setRobotPose(getPose());
         if (this.camera1.isConnected()) {
             visionField.getObject("Camera1")
                     .setPose(getPose().plus(new Transform2d(kRobotToCam1.getTranslation().toTranslation2d(),
                             kRobotToCam1.getRotation().toRotation2d())));
+
+            SmartDashboard.putBoolean("Camera 1 has estimate?", cam1LatestResultTimestamp > Timer.getFPGATimestamp() - 1);
         } else {
             visionField.getObject("Camera1").setPose(0, 0, new Rotation2d());
         }
@@ -185,13 +204,14 @@ public class Vision extends SubsystemBase {
             visionField.getObject("Camera2")
                     .setPose(getPose().plus(new Transform2d(kRobotToCam2.getTranslation().toTranslation2d(),
                             kRobotToCam2.getRotation().toRotation2d())));
+            SmartDashboard.putBoolean("Camera 2 has estimate?", cam2LatestResultTimestamp > Timer.getFPGATimestamp() - 1);
         } else {
             visionField.getObject("Camera2").setPose(0, 0, new Rotation2d());
         }
 
-        SmartDashboard.putData("VisionField", visionField);
+        SmartDashboard.putData("Vision/VisionField", visionField);
 
-        SmartDashboard.putNumberArray("Component dist to hub",
+        SmartDashboard.putNumberArray("Vision/Component dist to hub",
                 getComponentDistanceFromRobotPartToHub(new Translation2d(0, 0)));
 
     }
@@ -339,7 +359,8 @@ public class Vision extends SubsystemBase {
     }
 
     /**
-     * Calculates the angle from a specific robot part to the hub using the latest estimated
+     * Calculates the angle from a specific robot part to the hub using the latest
+     * estimated
      * pose of the robot and the known position of the hub on the field. The angle
      * is measured counterclockwise from the robot's forward direction.
      * 
@@ -353,7 +374,7 @@ public class Vision extends SubsystemBase {
         Double[] distances = getComponentDistanceFromRobotPartToHub(robotPartPose);
         double deltaX = distances[0];
         double deltaY = distances[1];
-        Rotation2d angleToHub = robotPose.getRotation().minus(new Rotation2d(Math.atan2(deltaY, deltaX)));
+        Rotation2d angleToHub = robotPose.getRotation().minus(new Rotation2d(Math.atan2(deltaY, deltaX) + Math.PI));
         return angleToHub.getDegrees();
     }
 }

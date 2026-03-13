@@ -109,7 +109,7 @@ public class RobotContainer {
 
         // Configures Button Bindings for TELEOP ONLY
         configureButtonBindings();
-        s_swerve.m_gyro.setAngleAdjustment(s_optics.getPose().getRotation().getDegrees());
+
     }
 
     // Used by robot.java to get the autonomous path selected
