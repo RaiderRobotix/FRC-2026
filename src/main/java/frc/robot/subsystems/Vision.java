@@ -48,6 +48,9 @@ public class Vision extends SubsystemBase {
     // but it's really useful for checking that the pose estimates are accurate.
     private Field2d visionField = new Field2d();
 
+    private Field2d cam1Field = new Field2d();
+    private Field2d cam2Field = new Field2d();
+
     /*
      * Robot Center: C
      * Camera 1: 1
@@ -108,7 +111,7 @@ public class Vision extends SubsystemBase {
     // correction rate
     // (Fake values. Experiment and determine estimation noise on an actual robot.)
     public static final Matrix<N3, N1> kSingleTagStdDevs = VecBuilder.fill(4, 4, 8);
-    public static final Matrix<N3, N1> kMultiTagStdDevs = VecBuilder.fill(0.3, 0.3, 0.6);
+    public static final Matrix<N3, N1> kMultiTagStdDevs = VecBuilder.fill(0.4, 0.4, 0.7);
 
     /**
      * Constructor for the Vision subsystem. Initializes the two cameras and their
@@ -163,8 +166,10 @@ public class Vision extends SubsystemBase {
 
             if (camera == camera1) {
                 cam1LatestResultTimestamp = est.timestampSeconds;
+                cam1Field.setRobotPose(est.estimatedPose.toPose2d());
             } else if (camera == camera2) {
                 cam2LatestResultTimestamp = est.timestampSeconds;
+                cam2Field.setRobotPose(est.estimatedPose.toPose2d());
             }
             if (est.estimatedPose.toPose2d().getTranslation().getDistance(getPose().getTranslation()) < 0.5) {
                 swervePoseEstimator.addVisionMeasurement(est.estimatedPose.toPose2d(), est.timestampSeconds,
@@ -196,7 +201,8 @@ public class Vision extends SubsystemBase {
                     .setPose(getPose().plus(new Transform2d(kRobotToCam1.getTranslation().toTranslation2d(),
                             kRobotToCam1.getRotation().toRotation2d())));
 
-            SmartDashboard.putBoolean("Camera 1 has estimate?", cam1LatestResultTimestamp > Timer.getFPGATimestamp() - 1);
+            SmartDashboard.putBoolean("Camera 1 has estimate?",
+                    cam1LatestResultTimestamp > Timer.getFPGATimestamp() - 1);
         } else {
             visionField.getObject("Camera1").setPose(0, 0, new Rotation2d());
         }
@@ -204,12 +210,15 @@ public class Vision extends SubsystemBase {
             visionField.getObject("Camera2")
                     .setPose(getPose().plus(new Transform2d(kRobotToCam2.getTranslation().toTranslation2d(),
                             kRobotToCam2.getRotation().toRotation2d())));
-            SmartDashboard.putBoolean("Camera 2 has estimate?", cam2LatestResultTimestamp > Timer.getFPGATimestamp() - 1);
+            SmartDashboard.putBoolean("Camera 2 has estimate?",
+                    cam2LatestResultTimestamp > Timer.getFPGATimestamp() - 1);
         } else {
             visionField.getObject("Camera2").setPose(0, 0, new Rotation2d());
         }
 
         SmartDashboard.putData("Vision/VisionField", visionField);
+        SmartDashboard.putData("Vision/Cam1 Only Field", cam1Field);
+        SmartDashboard.putData("Vision/Cam2 Only Field", cam2Field);
 
         SmartDashboard.putNumberArray("Vision/Component dist to hub",
                 getComponentDistanceFromRobotPartToHub(new Translation2d(0, 0)));

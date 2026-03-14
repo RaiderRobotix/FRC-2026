@@ -102,7 +102,7 @@ public class Swerve extends SubsystemBase {
                 new Pose2d(),
                 VecBuilder.fill(0.1, 0.1, 0.1), // State measurement standard deviations. X and Y are in meters, and
                                                 // heading is in radians
-                VecBuilder.fill(1, 1, 1) // Vision measurement standard deviations. X and Y are in meters, and heading
+                VecBuilder.fill(1.5, 1.5, 1.5) // Vision measurement standard deviations. X and Y are in meters, and heading
                                          // is in radians);
         );
         // Autonomous setup -- This comes from Path Planner and is NOT my code.
@@ -110,8 +110,8 @@ public class Swerve extends SubsystemBase {
         try {
             config = RobotConfig.fromGUISettings();
             AutoBuilder.configure(
-                    this::getPose, // Robot pose supplier
-                    this::resetPose, // Method to reset odometry (will be called if your auto has a starting pose)
+                    this::getVisionPose, // Robot pose supplier
+                    this::resetVisionPose, // Method to reset odometry (will be called if your auto has a starting pose)
                     this::getRobotRelativeSpeeds, // ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
                     (speeds, feedforwards) -> driveRobotRelative(speeds), // Method that will drive the robot given
                                                                           // ROBOT RELATIVE ChassisSpeeds. Also
@@ -277,6 +277,9 @@ public class Swerve extends SubsystemBase {
     /** Get the estimated pose of the swerve drive on the field. */
     public Pose2d getVisionPose() {
         return poseEstimator.getEstimatedPosition();
+    }
+    public void resetVisionPose(Pose2d pose) {
+        poseEstimator.resetPose(pose);
     }
 
     public void zeroHeading() {
