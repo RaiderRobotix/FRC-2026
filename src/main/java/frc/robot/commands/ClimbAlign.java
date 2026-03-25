@@ -22,6 +22,7 @@ public class ClimbAlign extends Command {
         this.yFromTag = yFromTag;
     }
 
+    /* 
     @Override
     public void execute() {
         double y_translation = (s_optics.getYawVal() - (Math.atan(xFromTag / yFromTag) * 180 / Math.PI)) / 40;
@@ -33,4 +34,5 @@ public class ClimbAlign extends Command {
                 true);
 
     }
+                */
 }

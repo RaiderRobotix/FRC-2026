@@ -1,0 +1,54 @@
+{
+  "version": "2025.0",
+  "waypoints": [
+    {
+      "anchor": {
+        "x": 3.410650195058516,
+        "y": 6.647
+      },
+      "prevControl": null,
+      "nextControl": {
+        "x": 2.738361508452534,
+        "y": 6.481876462938883
+      },
+      "isLocked": false,
+      "linkedName": "Left Start"
+    },
+    {
+      "anchor": {
+        "x": 3.221937581274381,
+        "y": 7.355
+      },
+      "prevControl": {
+        "x": 2.679388816644992,
+        "y": 7.307821846553966
+      },
+      "nextControl": null,
+      "isLocked": false,
+      "linkedName": "Left MLPCA 1 Pt 1 to 2"
+    }
+  ],
+  "rotationTargets": [],
+  "constraintZones": [],
+  "pointTowardsZones": [],
+  "eventMarkers": [],
+  "globalConstraints": {
+    "maxVelocity": 1.0,
+    "maxAcceleration": 3.0,
+    "maxAngularVelocity": 540.0,
+    "maxAngularAcceleration": 720.0,
+    "nominalVoltage": 12.0,
+    "unlimited": false
+  },
+  "goalEndState": {
+    "velocity": 0,
+    "rotation": 180.0
+  },
+  "reversed": false,
+  "folder": null,
+  "idealStartingState": {
+    "velocity": 0,
+    "rotation": -59.99999999999999
+  },
+  "useDefaultConstraints": false
+}

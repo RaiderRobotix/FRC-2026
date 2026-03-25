@@ -1,6 +1,8 @@
 package frc.robot.subsystems;
 
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.Constants;
+
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
@@ -14,7 +16,7 @@ public class Shooter extends SubsystemBase {
     private SparkMax rightShooter;
 
     // Percent output of the shooters
-    private double output = 0.1;
+    private double output = 0.53; //55
 
     // Creates two blank config objects
     private SparkMaxConfig leftConfig = new SparkMaxConfig();
@@ -34,7 +36,7 @@ public class Shooter extends SubsystemBase {
         leftConfig.closedLoop.pidf(1.0, 0.0, 0.0, 0.0)
                 .outputRange(-1, 1);
         leftConfig.idleMode(IdleMode.kCoast)
-                .smartCurrentLimit(10)
+                .smartCurrentLimit(Constants.sparkMaxCurrentLimit)
                 .inverted(false);
         leftShooter.configure(leftConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
     }
@@ -43,7 +45,7 @@ public class Shooter extends SubsystemBase {
         rightConfig.closedLoop.pidf(1.0, 0.0, 0.0, 0.0)
                 .outputRange(-1, 1);
         rightConfig.idleMode(IdleMode.kCoast)
-                .smartCurrentLimit(10)
+                .smartCurrentLimit(Constants.sparkMaxCurrentLimit)
                 .inverted(false);
         rightShooter.configure(rightConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
     }
@@ -57,19 +59,23 @@ public class Shooter extends SubsystemBase {
     // Runs shooters forward
     public void runShootersFwd() {
         leftShooter.set(output);
-        rightShooter.set(output);
+        rightShooter.set(-output);
     }
 
     // Runs shooters backwards (In the event of a blockage)
     public void runShootersBwd() {
         leftShooter.set(-output);
-        rightShooter.set(-output);
+        rightShooter.set(output);
     }
 
     // Runs shooters according to a custom output double (From -1 to 1). Most likely
     // used in junction with vision
     public void runShootersCustom(double customOutput) {
         leftShooter.set(customOutput);
-        rightShooter.set(customOutput);
+        rightShooter.set(-customOutput);
+    }
+
+    public void changeSpeed(){
+        output *= -1;
     }
 }

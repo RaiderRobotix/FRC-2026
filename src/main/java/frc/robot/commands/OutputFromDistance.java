@@ -14,7 +14,7 @@ public class OutputFromDistance extends Command {
         this.s_swerve = s_swerve;
         this.s_optics = s_optics;
     }
-
+    /*
     @Override
     public void execute() {
         double dist = s_optics.getDistanceFromPitchVal();
@@ -22,4 +22,5 @@ public class OutputFromDistance extends Command {
         double b = Math.sin(2 * 67.2) * (dist + 47) - 2 * Math.pow(Math.cos(67.2), 2) * (72 - 36);
         double inchesPerSecond = Math.sqrt(a / b);
     }
+        */
 }

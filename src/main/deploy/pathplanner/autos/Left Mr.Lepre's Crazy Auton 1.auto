@@ -1,0 +1,139 @@
+{
+  "version": "2025.0",
+  "command": {
+    "type": "sequential",
+    "data": {
+      "commands": [
+        {
+          "type": "named",
+          "data": {
+            "name": "startShooters"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "hopperOut"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "hopperOut"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "hopperOut"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "hopperOut"
+          }
+        },
+        {
+          "type": "wait",
+          "data": {
+            "waitTime": 1.0
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "gateUp"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "startIntake"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "runAgitator"
+          }
+        },
+        {
+          "type": "wait",
+          "data": {
+            "waitTime": 1.0
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "runAgitator"
+          }
+        },
+        {
+          "type": "wait",
+          "data": {
+            "waitTime": 1.0
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "runAgitator"
+          }
+        },
+        {
+          "type": "wait",
+          "data": {
+            "waitTime": 1.0
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "runAgitator"
+          }
+        },
+        {
+          "type": "wait",
+          "data": {
+            "waitTime": 1.0
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "stopAgitator"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "stopShooters"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "Left MLPCA 1 Part 1"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "Left MLPCA 1 Part 2"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "Left MLPCA 1 Part 3"
+          }
+        }
+      ]
+    }
+  },
+  "resetOdom": true,
+  "folder": null,
+  "choreoAuto": false
+}

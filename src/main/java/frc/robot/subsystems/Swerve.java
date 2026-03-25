@@ -8,6 +8,11 @@ import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.math.numbers.N1;
+import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.math.Matrix;
+import edu.wpi.first.math.VecBuilder;
+import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 
 import java.util.Optional;
 import com.pathplanner.lib.auto.AutoBuilder;
@@ -54,6 +59,7 @@ public class Swerve extends SubsystemBase {
     // Creates a field for the smart dashboard to visualize
     Field2d m_field = new Field2d();
 
+    public final SwerveDrivePoseEstimator poseEstimator;
     // Creates a gyro (NavX)
     public AHRS m_gyro;
 
@@ -82,7 +88,16 @@ public class Swerve extends SubsystemBase {
                         SwerveMod2.getPosition(),
                         SwerveMod3.getPosition()
                 });
-
+        poseEstimator = new SwerveDrivePoseEstimator(
+                Constants.kDriveKinematics,
+                getGyroYaw(),
+                getModulePositions(),
+                new Pose2d(),
+                VecBuilder.fill(0.2, 0.6, 0.1), // State measurement standard deviations. X and Y are in meters, and
+                                                // heading is in radians
+                VecBuilder.fill(1.2, 1.8, 3.5) // Vision measurement standard deviations. X and Y are in meters, and heading
+                                         // is in radians);
+        );
         // Autonomous setup -- This comes from Path Planner and is NOT my code.
         RobotConfig config;
         try {
@@ -98,8 +113,8 @@ public class Swerve extends SubsystemBase {
                     new PPHolonomicDriveController( // PPHolonomicController is the built in path following controller
                                                     // for holonomic drive trains
                             new PIDConstants(0.04, 0.0, 0.0), // Translation PID constants
-                            new PIDConstants(0.1, 0.0, 0.0) // Rotation PID constants
-                    ),
+                            new PIDConstants(1.95, 0.0, 0.0) // Rotation PID constants
+                    ), //REMINDER FOR SAMEER: LOWER PID MEANS ROBOT THINKS FIELD IS BIGGER
                     config, // The robot configuration
                     () -> {
                         // Boolean supplier that controls when the path will be mirrored for the red
@@ -151,6 +166,7 @@ public class Swerve extends SubsystemBase {
                 }
 
         );
+        poseEstimator.update(getGyroYaw(), getModulePositions());
         SmartDashboard.putNumber("Mod 0 Cancoder", SwerveMod0.getCanCoder().getDegrees());
         SmartDashboard.putNumber("Mod 0 Encoder", SwerveMod0.getEncoderPosition());
         SmartDashboard.putNumber("Mod 1 Cancoder", SwerveMod1.getCanCoder().getDegrees());
@@ -235,6 +251,27 @@ public class Swerve extends SubsystemBase {
         SwerveMod3.setDesiredState(swerveModuleStates[3]);
     }
 
+     /**
+     * See {@link SwerveDrivePoseEstimator#addVisionMeasurement(Pose2d, double)}.
+     */
+    public void addVisionMeasurement(Pose2d visionMeasurement, double timestampSeconds) {
+        poseEstimator.addVisionMeasurement(visionMeasurement, timestampSeconds);
+    }
+
+    /**
+     * See
+     * {@link SwerveDrivePoseEstimator#addVisionMeasurement(Pose2d, double, Matrix)}.
+     */
+    public void addVisionMeasurement(
+            Pose2d visionMeasurement, double timestampSeconds, Matrix<N3, N1> stdDevs) {
+        poseEstimator.addVisionMeasurement(visionMeasurement, timestampSeconds, stdDevs);
+    }
+
+    /** Get the estimated pose of the swerve drive on the field. */
+    public Pose2d getVisionPose() {
+        return poseEstimator.getEstimatedPosition();
+    }
+    
     public void zeroHeading() {
         m_gyro.reset();
     }

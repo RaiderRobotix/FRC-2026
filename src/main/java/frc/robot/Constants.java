@@ -8,8 +8,10 @@ import frc.lib.util.swerveUtil.COTSNeoSwerveConstants.driveGearRatios;
 
 public class Constants {
 
-    // 0.0238 PathPlanner Units per inch
+    // 0.027209 PathPlanner Units per inch
 
+    //40 degree angle
+    //52 inches from top right corner of robot to field
     public static final COTSNeoSwerveConstants chosenModule = COTSNeoSwerveConstants
             .SDSMK4i(driveGearRatios.SDSMK4i_L2);
     public static final double angleGearRatio = chosenModule.angleGearRatio;
@@ -19,12 +21,14 @@ public class Constants {
 
     public static final double stickDeadband = 0.1;
 
+    public static final int sparkMaxCurrentLimit = 40;
+
     public static final double gravity = 386.08858;
 
     public static final boolean invertGyro = true; // Always ensure Gyro is CCW+ CW-
 
-    public static final double kTrackWidth = Units.inchesToMeters(19);
-    public static final double kWheelBase = Units.inchesToMeters(20.75);
+    public static final double kTrackWidth = Units.inchesToMeters(22);
+    public static final double kWheelBase = Units.inchesToMeters(21.5);
     public static final SwerveDriveKinematics kDriveKinematics = new SwerveDriveKinematics(
             new Translation2d(kWheelBase / 2, kTrackWidth / 2),
             new Translation2d(kWheelBase / 2, -kTrackWidth / 2),
@@ -49,7 +53,7 @@ public class Constants {
         public static final int drivermotorID0 = 10;
         public static final int anglemotorID0 = 20;
         public static final int camcoderID = 0;
-        public static final double offset0 = 1.095262;
+        public static final double offset0 = -0.848292; //Original Robot Base: 1.095262;
 
     }
 
@@ -58,7 +62,7 @@ public class Constants {
         public static final int drivermotorID1 = 11;
         public static final int anglemotorID1 = 21;
         public static final int camcoderID1 = 1;
-        public static final double offset1 = 2.543340;
+        public static final double offset1 = -1.274738; //Original Robot Base: 2.543340;
     }
 
     public static final class Mod2 {
@@ -66,7 +70,7 @@ public class Constants {
         public static final int drivermotorID2 = 12;
         public static final int anglemotorID2 = 22;
         public static final int camcoderID2 = 2;
-        public static final double offset2 = -0.708699;
+        public static final double offset2 = -0.027612; //Original Robot Base: -0.708699; 
     }
 
     public static final class Mod3 {
@@ -74,7 +78,7 @@ public class Constants {
         public static final int drivermotorID3 = 13;
         public static final int anglemotorID3 = 23;
         public static final int camcoderID3 = 3;
-        public static final double offset3 = -2.411418;
+        public static final double offset3 = 1.871457; //Original Robot Base: -2.411418;
     }
 
     public static final class NeoMotorConstants {

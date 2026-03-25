@@ -38,7 +38,7 @@ public class Configs {
                         .velocityConversionFactor((2 * Math.PI) / Constants.angleGearRatio/60);
                 turningConfig.closedLoop
                         .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
-                        .pid(1, 0, 0)
+                        .pid(0.5, 0, 0)
                         .outputRange(-1, 1)
                         .positionWrappingEnabled(true)
                         .positionWrappingInputRange(0, turningFactor);
